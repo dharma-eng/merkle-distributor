@@ -8,13 +8,19 @@ import "./interfaces/IMerkleDistributor.sol";
 contract MerkleDistributor is IMerkleDistributor {
     address public immutable override token;
     bytes32 public immutable override merkleRoot;
+    address public immutable override funder;
+    uint256 public immutable override fundingAmount;
+    bool public override isFunded;
 
     // This is a packed array of booleans.
     mapping(uint256 => uint256) private claimedBitMap;
 
-    constructor(address token_, bytes32 merkleRoot_) public {
+    constructor(address token_, bytes32 merkleRoot_, address funder_, uint256 fundingAmount_) public {
         token = token_;
         merkleRoot = merkleRoot_;
+        funder = funder_;
+        fundingAmount = fundingAmount_;
+        isFunded = false;
     }
 
     function isClaimed(uint256 index) public view override returns (bool) {
@@ -43,5 +49,15 @@ contract MerkleDistributor is IMerkleDistributor {
         require(IERC20(token).transfer(account, amount), 'MerkleDistributor: Transfer failed.');
 
         emit Claimed(index, account, amount);
+    }
+
+    function fund() external override {
+        require(!isFunded, 'MerkleDistributor: Distributor has already been funded.');
+
+        isFunded = true;
+
+        require(IERC20(token).transferFrom(funder, address(this), fundingAmount), 'MerkleDistributor: Funding failed.');
+
+        emit Funded(funder, fundingAmount);
     }
 }
