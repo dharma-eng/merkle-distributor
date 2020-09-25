@@ -35,42 +35,72 @@ describe('MerkleDistributor', () => {
 
   describe('#token', () => {
     it('returns the token address', async () => {
-      const distributor = await deployContract(wallet0, Distributor, [token.address, ZERO_BYTES32, NULL_ADDRESS, ZERO_BYTES32], overrides)
+      const distributor = await deployContract(
+        wallet0,
+        Distributor,
+        [token.address, ZERO_BYTES32, NULL_ADDRESS, ZERO_BYTES32],
+        overrides
+      )
       expect(await distributor.token()).to.eq(token.address)
     })
   })
 
   describe('#merkleRoot', () => {
     it('returns the zero merkle root', async () => {
-      const distributor = await deployContract(wallet0, Distributor, [token.address, ZERO_BYTES32, NULL_ADDRESS, ZERO_BYTES32], overrides)
+      const distributor = await deployContract(
+        wallet0,
+        Distributor,
+        [token.address, ZERO_BYTES32, NULL_ADDRESS, ZERO_BYTES32],
+        overrides
+      )
       expect(await distributor.merkleRoot()).to.eq(ZERO_BYTES32)
     })
   })
 
   describe('#funder', () => {
     it('returns the funder address', async () => {
-      const distributor = await deployContract(wallet0, Distributor, [token.address, ZERO_BYTES32, wallet0.address, ZERO_BYTES32], overrides)
+      const distributor = await deployContract(
+        wallet0,
+        Distributor,
+        [token.address, ZERO_BYTES32, wallet0.address, ZERO_BYTES32],
+        overrides
+      )
       expect(await distributor.funder()).to.eq(wallet0.address)
     })
   })
 
   describe('#fundingAmount', () => {
     it('returns the funding amount', async () => {
-      const distributor = await deployContract(wallet0, Distributor, [token.address, ZERO_BYTES32, wallet0.address, 9000], overrides)
+      const distributor = await deployContract(
+        wallet0,
+        Distributor,
+        [token.address, ZERO_BYTES32, wallet0.address, 9000],
+        overrides
+      )
       expect(await distributor.fundingAmount()).to.eq(9000)
     })
   })
 
   describe('#claim', () => {
     it('fails for empty proof', async () => {
-      const distributor = await deployContract(wallet0, Distributor, [token.address, ZERO_BYTES32, NULL_ADDRESS, ZERO_BYTES32], overrides)
+      const distributor = await deployContract(
+        wallet0,
+        Distributor,
+        [token.address, ZERO_BYTES32, NULL_ADDRESS, ZERO_BYTES32],
+        overrides
+      )
       await expect(distributor.claim(0, wallet0.address, 10, [])).to.be.revertedWith(
         'MerkleDistributor: Invalid proof.'
       )
     })
 
     it('fails for invalid index', async () => {
-      const distributor = await deployContract(wallet0, Distributor, [token.address, ZERO_BYTES32, NULL_ADDRESS, ZERO_BYTES32], overrides)
+      const distributor = await deployContract(
+        wallet0,
+        Distributor,
+        [token.address, ZERO_BYTES32, NULL_ADDRESS, ZERO_BYTES32],
+        overrides
+      )
       await expect(distributor.claim(0, wallet0.address, 10, [])).to.be.revertedWith(
         'MerkleDistributor: Invalid proof.'
       )
@@ -84,36 +114,39 @@ describe('MerkleDistributor', () => {
           { account: wallet0.address, amount: BigNumber.from(100) },
           { account: wallet1.address, amount: BigNumber.from(101) },
         ])
-        distributor = await deployContract(wallet0, Distributor, [token.address, tree.getHexRoot(), wallet0.address, 201], overrides)
+        distributor = await deployContract(
+          wallet0,
+          Distributor,
+          [token.address, tree.getHexRoot(), wallet0.address, 201],
+          overrides
+        )
         await token.setBalance(wallet0.address, 201)
       })
 
       it('cannot claim before it is funded', async () => {
         const proof0 = tree.getProof(0, wallet0.address, BigNumber.from(100))
-        await expect(distributor.claim(0, wallet0.address, 100, proof0, overrides))
-          .to.be.revertedWith('ERC20: transfer amount exceeds balance')
+        await expect(distributor.claim(0, wallet0.address, 100, proof0, overrides)).to.be.revertedWith(
+          'ERC20: transfer amount exceeds balance'
+        )
         const proof1 = tree.getProof(1, wallet1.address, BigNumber.from(101))
-        await expect(distributor.claim(1, wallet1.address, 101, proof1, overrides))
-          .to.be.revertedWith('ERC20: transfer amount exceeds balance')
+        await expect(distributor.claim(1, wallet1.address, 101, proof1, overrides)).to.be.revertedWith(
+          'ERC20: transfer amount exceeds balance'
+        )
       })
 
       it('cannot be funded without sufficient approval from funder', async () => {
-        await expect(distributor.fund())
-          .to.be.revertedWith('ERC20: transfer amount exceeds allowance')
+        await expect(distributor.fund()).to.be.revertedWith('ERC20: transfer amount exceeds allowance')
       })
 
       it('cannot be funded without sufficient balance of funder', async () => {
         await token.approve(distributor.address, 201)
         await token.setBalance(wallet0.address, 200)
-        await expect(distributor.fund())
-          .to.be.revertedWith('ERC20: transfer amount exceeds balance')
+        await expect(distributor.fund()).to.be.revertedWith('ERC20: transfer amount exceeds balance')
       })
 
       it('#fund with sufficient approval and balance from funder', async () => {
         await token.approve(distributor.address, 201)
-        await expect(distributor.fund())
-          .to.emit(distributor, 'Funded')
-          .withArgs(wallet0.address, 201)
+        await expect(distributor.fund()).to.emit(distributor, 'Funded').withArgs(wallet0.address, 201)
       })
 
       it('initially does not set #isFunded', async () => {
@@ -130,8 +163,7 @@ describe('MerkleDistributor', () => {
         await token.approve(distributor.address, 402)
         await token.setBalance(wallet0.address, 402)
         await distributor.fund()
-        await expect(distributor.fund())
-          .to.be.revertedWith('MerkleDistributor: Distributor has already been funded.')
+        await expect(distributor.fund()).to.be.revertedWith('MerkleDistributor: Distributor has already been funded.')
       })
 
       it('successful claim', async () => {
@@ -279,7 +311,12 @@ describe('MerkleDistributor', () => {
             return { account: wallet.address, amount: BigNumber.from(ix + 1) }
           })
         )
-        distributor = await deployContract(wallet0, Distributor, [token.address, tree.getHexRoot(), NULL_ADDRESS, ZERO_BYTES32], overrides)
+        distributor = await deployContract(
+          wallet0,
+          Distributor,
+          [token.address, tree.getHexRoot(), NULL_ADDRESS, ZERO_BYTES32],
+          overrides
+        )
         await token.setBalance(distributor.address, 201)
       })
 
@@ -348,7 +385,12 @@ describe('MerkleDistributor', () => {
       })
 
       beforeEach('deploy', async () => {
-        distributor = await deployContract(wallet0, Distributor, [token.address, tree.getHexRoot(), NULL_ADDRESS, ZERO_BYTES32], overrides)
+        distributor = await deployContract(
+          wallet0,
+          Distributor,
+          [token.address, tree.getHexRoot(), NULL_ADDRESS, ZERO_BYTES32],
+          overrides
+        )
         await token.setBalance(distributor.address, constants.MaxUint256)
       })
 
@@ -421,7 +463,12 @@ describe('MerkleDistributor', () => {
       })
       expect(tokenTotal).to.eq('0x02ee') // 750
       claims = innerClaims
-      distributor = await deployContract(wallet0, Distributor, [token.address, merkleRoot, NULL_ADDRESS, ZERO_BYTES32], overrides)
+      distributor = await deployContract(
+        wallet0,
+        Distributor,
+        [token.address, merkleRoot, NULL_ADDRESS, ZERO_BYTES32],
+        overrides
+      )
       await token.setBalance(distributor.address, tokenTotal)
     })
 
